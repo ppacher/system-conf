@@ -58,11 +58,34 @@ func Prepare(sec Section, specs []OptionSpec) (Section, error) {
 		Options: ApplyDefaults(sec.Options, specs),
 	}
 
-	if err := Validate(sec.Options, specs); err != nil {
+	if err := ValidateOptions(sec.Options, specs); err != nil {
 		return copy, err
 	}
 
 	return copy, nil
+}
+
+// ValidateFile validates all sections in file and applies any default option
+// values. If specs is nil then ValidateFile is a no-op.
+func ValidateFile(file *File, specs map[string][]OptionSpec) error {
+	if specs == nil {
+		return nil
+	}
+
+	for idx, section := range file.Sections {
+		secSpec, ok := specs[strings.ToLower(section.Name)]
+		if !ok {
+			return ErrUnknownSection
+		}
+
+		sec, err := Prepare(section, secSpec)
+		if err != nil {
+			return err
+		}
+		file.Sections[idx] = sec
+	}
+
+	return nil
 }
 
 // ApplyDefaults will add the default value for each option that is not specified
@@ -109,9 +132,9 @@ func ApplyDefaults(options Options, specs []OptionSpec) Options {
 	return options
 }
 
-// Validate validates if all unit options specified in sec conform
+// ValidateOptions validates if all unit options specified in sec conform
 // to the specification options.
-func Validate(options Options, specs []OptionSpec) error {
+func ValidateOptions(options Options, specs []OptionSpec) error {
 	if IsAllowAny(specs) {
 		return nil
 	}

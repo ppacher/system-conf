@@ -11,7 +11,7 @@ var (
 	ErrInvalidFloat            = errors.New("invalid floating point number)")
 	ErrInvalidNumber           = errors.New("invalid number")
 	ErrNoSections              = errors.New("task does not contain any sections")
-	ErrInvalidTaskSection      = errors.New("[Task] section is invalid")
+	ErrUnknownSection          = errors.New("unknown section")
 	ErrDropInSectionNotExists  = errors.New("section defined in drop-in does not exist")
 	ErrDropInSectionNotAllowed = errors.New("drop-ins not allowed for not-unique sections")
 )

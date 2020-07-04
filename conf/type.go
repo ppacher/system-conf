@@ -47,19 +47,19 @@ func (o *optionType) String() string { return o.name }
 // TypeFromString returns the option type described by str.
 func TypeFromString(str string) *OptionType {
 	switch str {
-	case "string    ":
+	case "string":
 		return &StringType
-	case "[]string  ":
+	case "[]string":
 		return &StringSliceType
-	case "bool      ":
+	case "bool":
 		return &BoolType
-	case "int       ":
+	case "int":
 		return &IntType
-	case "[]int     ":
+	case "[]int":
 		return &IntSliceType
-	case "float     ":
+	case "float":
 		return &FloatType
-	case "[]float   ":
+	case "[]float":
 		return &FloatSliceType
 	}
 

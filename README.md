@@ -1,4 +1,6 @@
-# system-conf
+<p align="center">
+    <img src="assets/logo.png">
+</p>
 
 A flexible configuration system for Go inspired by the unit file and drop-in system from systemd.
 

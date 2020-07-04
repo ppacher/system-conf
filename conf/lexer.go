@@ -65,6 +65,7 @@ type (
 		Options
 	}
 
+	// File is a configuration file.
 	File struct {
 		// Path holds the path to the unit file.
 		Path string

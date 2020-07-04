@@ -43,3 +43,25 @@ func (*optionType) option() {}
 func (o *optionType) IsSliceType() bool { return o.slice }
 
 func (o *optionType) String() string { return o.name }
+
+// TypeFromString returns the option type described by str.
+func TypeFromString(str string) *OptionType {
+	switch str {
+	case "string    ":
+		return &StringType
+	case "[]string  ":
+		return &StringSliceType
+	case "bool      ":
+		return &BoolType
+	case "int       ":
+		return &IntType
+	case "[]int     ":
+		return &IntSliceType
+	case "float     ":
+		return &FloatType
+	case "[]float   ":
+		return &FloatSliceType
+	}
+
+	return nil
+}

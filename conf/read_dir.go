@@ -3,6 +3,7 @@ package conf
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
@@ -24,7 +25,8 @@ func ReadDir(directory, suffix string, spec map[string][]OptionSpec) ([]*File, e
 			continue
 		}
 
-		f, err := LoadFile(e.Name())
+		path := filepath.Join(directory, e.Name())
+		f, err := LoadFile(path)
 		if err != nil {
 			return files, fmt.Errorf("%s: %w", e.Name(), err)
 		}

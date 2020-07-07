@@ -24,8 +24,9 @@ var readDir func(path string) ([]os.FileInfo, error) = ioutil.ReadDir
 // to tasks with unique section names. That is, if a task specifies
 // the same action multiple times (like multiple [Copy] sections),
 // drop-ins cannot be applied to that task.
-func ApplyDropIns(t *File, dropins []*DropIn, specs map[string]map[string]OptionSpec) error {
+func ApplyDropIns(t *File, dropins []*DropIn, sectionOptions map[string][]OptionSpec) error {
 	slm := make(map[string]*Section)
+	specs := buildSpecLookupMap(sectionOptions)
 
 	for idx := range t.Sections {
 		sec := t.Sections[idx]
@@ -46,16 +47,16 @@ func ApplyDropIns(t *File, dropins []*DropIn, specs map[string]map[string]Option
 
 			s, ok := slm[sn]
 			if !ok {
-				return ErrDropInSectionNotExists
+				return fmt.Errorf("%s: %w", sn, ErrDropInSectionNotExists)
 			}
 
 			sectionSpec, ok := specs[sn]
 			if s == nil || !ok {
-				return ErrDropInSectionNotAllowed
+				return fmt.Errorf("%s: %w", sn, ErrDropInSectionNotAllowed)
 			}
 
 			if err := mergeSections(s, dropInSec, sectionSpec); err != nil {
-				return err
+				return fmt.Errorf("%s: %w", sn, err)
 			}
 		}
 	}
@@ -218,4 +219,15 @@ func DropInSearchPaths(unitName string, rootDir string) []string {
 	// add <rootDir>/foo-bar-baz.task.d
 	paths = append(paths, filepath.Join(rootDir, unitName+".d"))
 	return paths
+}
+
+func buildSpecLookupMap(specs map[string][]OptionSpec) map[string]map[string]OptionSpec {
+	r := make(map[string]map[string]OptionSpec)
+	for key, sec := range specs {
+		r[key] = make(map[string]OptionSpec)
+		for _, opt := range sec {
+			r[key][strings.ToLower(opt.Name)] = opt
+		}
+	}
+	return r
 }

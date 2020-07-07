@@ -80,15 +80,18 @@ func TestSearchDropinFiles(t *testing.T) {
 }
 
 func TestApplyDropIns(t *testing.T) {
-	specs := map[string]map[string]OptionSpec{
+	specs := map[string][]OptionSpec{
 		"test": {
-			"single": {
+			{
 				Type: StringType,
+				Name: "Single",
 			},
-			"slice1": {
+			{
+				Name: "Slice1",
 				Type: StringSliceType,
 			},
-			"slice2": {
+			{
+				Name: "Slice2",
 				Type: StringSliceType,
 			},
 		},
@@ -100,11 +103,11 @@ func TestApplyDropIns(t *testing.T) {
 				Options: Options{
 					{
 						Name:  "Single",
-						Value: "SV",
+						Value: "TSK",
 					},
 					{
 						Name:  "Slice1",
-						Value: "Value1",
+						Value: "TSK",
 					},
 				},
 			},
@@ -117,19 +120,19 @@ func TestApplyDropIns(t *testing.T) {
 				Options: Options{
 					{
 						Name:  "Single",
-						Value: "from d1",
+						Value: "d1",
 					},
 					{
 						Name:  "Slice2",
-						Value: "from d1.1",
+						Value: "d1",
 					},
 					{
 						Name:  "Slice2",
-						Value: "from d1.2",
+						Value: "d1",
 					},
 					{
 						Name:  "Slice1",
-						Value: "Value2",
+						Value: "d1",
 					},
 				},
 			},
@@ -139,19 +142,6 @@ func TestApplyDropIns(t *testing.T) {
 	d2 := &DropIn{
 		Sections: []Section{
 			{
-				Name: "Task",
-				Options: Options{
-					{
-						Name:  "Description",
-						Value: "Test Description",
-					},
-					{
-						Name:  "Disabled",
-						Value: "true",
-					},
-				},
-			},
-			{
 				Name: "Test",
 				Options: Options{
 					{
@@ -160,7 +150,7 @@ func TestApplyDropIns(t *testing.T) {
 					},
 					{
 						Name:  "Slice1",
-						Value: "Value2",
+						Value: "d2",
 					},
 				},
 			},
@@ -177,19 +167,19 @@ func TestApplyDropIns(t *testing.T) {
 				Options: Options{
 					{
 						Name:  "Single",
-						Value: "from d1",
+						Value: "d1",
 					},
 					{
 						Name:  "Slice2",
-						Value: "from d1.1",
+						Value: "d1",
 					},
 					{
 						Name:  "Slice2",
-						Value: "from d1.2",
+						Value: "d1",
 					},
 					{
 						Name:  "Slice1",
-						Value: "Value2",
+						Value: "d2",
 					},
 				},
 			},
@@ -219,7 +209,7 @@ func TestApplyDropInsNotAllowed(t *testing.T) {
 				},
 			},
 		},
-		map[string]map[string]OptionSpec{
+		map[string][]OptionSpec{
 			"test": nil,
 		},
 	)
@@ -242,7 +232,7 @@ func TestApplyDropInsSectionNotExists(t *testing.T) {
 				},
 			},
 		},
-		map[string]map[string]OptionSpec{
+		map[string][]OptionSpec{
 			"test": nil,
 		},
 	)
@@ -274,7 +264,7 @@ func TestApplyDropInsOptionNotExists(t *testing.T) {
 				},
 			},
 		},
-		map[string]map[string]OptionSpec{
+		map[string][]OptionSpec{
 			"test": nil,
 		},
 	)

@@ -4,6 +4,13 @@
 
 A flexible configuration system for Go inspired by the unit file and drop-in system from systemd.
 
+
+[![Go](https://github.com/ppacher/system-conf/workflows/Go/badge.svg)](https://github.com/ppacher/system-conf/actions)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/ppacher/system-conf?style=flat-square)
+![Stable: Beta](https://img.shields.io/badge/Stable-BETA-yellowgreen?style=flat-square)
+![GitHub](https://img.shields.io/github/license/ppacher/system-conf?style=flat-square)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ppacher/system-conf?label=Release&style=flat-square)
+
 system-conf is a flexible configuration system that puts the user in control of how their configuration
 is structured. It's based on the unit system used in systemd. It uses an INI style configuration and supports
 drop-in files and templating. 

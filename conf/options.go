@@ -10,6 +10,10 @@ var (
 	// ErrOptionNotSet is returned when a given option is
 	// not set.
 	ErrOptionNotSet = errors.New("option not set")
+
+	// ErrUnknownOptionType indicates that an option's type is
+	// not known.
+	ErrUnknownOptionType = errors.New("unknown option type")
 )
 
 // IsNotSet returns true if err is ErrOptionNotSet

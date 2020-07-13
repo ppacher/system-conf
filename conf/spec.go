@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -10,34 +11,57 @@ import (
 // OptionSpec describes an option
 type OptionSpec struct {
 	// Name is the name of the option.
-	Name string
+	Name string `json:"name"`
 
 	// Aliases is a set of aliases supported by this
 	// option spec. If set, there should be a "Interal"
 	// option for each alias name. Otherwise system-deploy
 	// will throw an error if an alias is used in the
 	// configuration. Use with care!
-	Aliases []string
+	Aliases []string `json:"aliases,omitempty"`
 
 	// Description is a human readable description of
 	// the option.
-	Description string
+	Description string `json:"description,omitempty"`
 
 	// Type defines the type of the option.
-	Type OptionType
+	Type OptionType `json:"type,omitempty"`
 
 	// Required may be set to true if deploy tasks must
 	// specify this option.
-	Required bool
+	Required bool `json:"required,omitempty"`
 
-	// Default may holds the default value for this option.
+	// Default may hold the default value for this option.
 	// This value is only for help purposes and is NOT SET
 	// as the default for that option.
-	Default string
+	Default string `json:"default,omitempty"`
 
 	// Internal may be set to true to omit the option from
 	// the help page.
-	Internal bool
+	Internal bool `json:"internal,omitempty"`
+}
+
+// UnmarshalJSON unmarshals blob into spec.
+func (spec *OptionSpec) UnmarshalJSON(blob []byte) error {
+	type embed OptionSpec
+	var wrapped struct {
+		embed
+		Type string `json:"type"` // must equal the json tag from OptionSpec
+	}
+
+	if err := json.Unmarshal(blob, &wrapped); err != nil {
+		return err
+	}
+
+	*spec = OptionSpec(wrapped.embed)
+	if wrapped.Type != "" {
+		t := TypeFromString(wrapped.Type)
+		if t == nil {
+			return ErrUnknownOptionType
+		}
+		spec.Type = *t
+	}
+	return nil
 }
 
 // AllowAny is a special option that can be used to disable

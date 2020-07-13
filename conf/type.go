@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -13,6 +14,7 @@ type OptionType interface {
 	IsSliceType() bool
 
 	fmt.Stringer
+	json.Marshaler
 }
 
 // All supported option types.
@@ -43,6 +45,11 @@ func (*optionType) option() {}
 func (o *optionType) IsSliceType() bool { return o.slice }
 
 func (o *optionType) String() string { return o.name }
+
+// MarshalJSON returns a JSON representation of the option type.
+func (o *optionType) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + o.name + `"`), nil
+}
 
 // TypeFromString returns the option type described by str.
 func TypeFromString(str string) *OptionType {

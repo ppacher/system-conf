@@ -6,8 +6,12 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
+// decodeFile decodes all sections of file as defined in spec into
+// outVal. Note that outVal must be a direct or indirect struct
+// type. outVal may be a nil struct-type value.
 func decodeFile(file *File, spec FileSpec, outVal reflect.Value) error {
 	kind := getKind(outVal)
 
@@ -36,12 +40,7 @@ func decodeFile(file *File, spec FileSpec, outVal reflect.Value) error {
 		return fmt.Errorf("target must be of type %s", reflect.Struct)
 	}
 
-	specCopy := make(FileSpec)
-	for name, secSpec := range spec {
-		specCopy[strings.ToLower(name)] = secSpec
-	}
-
-	return decodeFileToStruct(file, specCopy, outVal)
+	return decodeFileToStruct(file, spec, outVal)
 }
 
 func decodeFileToStruct(file *File, spec FileSpec, outVal reflect.Value) error {
@@ -69,9 +68,7 @@ func decodeFileToStruct(file *File, spec FileSpec, outVal reflect.Value) error {
 			}
 		}
 
-		name = strings.ToLower(name)
-
-		secSpec, ok := spec[name]
+		secSpec, ok := spec.FindSection(name)
 		if !ok {
 			return fmt.Errorf("no specification for section %q", name)
 		}
@@ -100,6 +97,9 @@ func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) e
 		valType := outVal.Type()
 		valElemType := valType.Elem()
 
+		// if we can set outVal we may also need to create a new
+		// value of the type it's pointing to, decode into that
+		// and then set the new value as the target of outVal pointer
 		if outVal.CanSet() {
 			realVal := outVal
 			if realVal.IsNil() {
@@ -114,6 +114,8 @@ func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) e
 			return nil
 		}
 
+		// Try to decode into the actual element outVal
+		// points to.
 		return decodeSections(sections, spec, reflect.Indirect(outVal))
 	}
 
@@ -124,11 +126,18 @@ func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) e
 		sliceVal := outVal
 
 		for i := 0; i < len(sections); i++ {
+			// ensure there are enough elements available in
+			// the target outVal slice.
 			for sliceVal.Len() <= i {
 				sliceVal = reflect.Append(sliceVal, reflect.Zero(valElemType))
 			}
 			currentField := sliceVal.Index(i)
 
+			// decode the section into the current field. We are
+			// calling into decodeSections again as it handles
+			// currentField being a pointer or nil-value and will
+			// eventually call decodeSectionToStruct and expect
+			// only one section being passed.
 			if err := decodeSections(Sections{sections[i]}, spec, currentField); err != nil {
 				return err
 			}
@@ -138,10 +147,15 @@ func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) e
 		return nil
 	}
 
+	// We only support decoding sections into struct-types here.
+	// TODO(ppacher): may add support for maps as well.
 	if kind != reflect.Struct {
 		return fmt.Errorf("target must be of type %s", reflect.Struct)
 	}
 
+	// There must be exactly one section to decode now. Otherwise
+	// there are multiple sections defined but the user expects
+	// only one. Bail out here.
 	if len(sections) != 1 {
 		return fmt.Errorf("invalid number of sections, expected 1 but got %d", len(sections))
 	}
@@ -150,9 +164,34 @@ func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) e
 }
 
 func decodeSectionToStruct(section Section, spec SectionSpec, outVal reflect.Value) error {
+	// If outVal is addressable and implements a SectionUnmarshaler
+	// than we use UnmarshalSection instead of a reflection based
+	// method.
+	// Note that only the Ptr version of a value can implement
+	// SectionUnmarshaler.
+	var u SectionUnmarshaler
+	if outVal.CanAddr() {
+		if m, ok := outVal.Addr().Interface().(SectionUnmarshaler); ok {
+			u = m
+		}
+	} else if m, ok := outVal.Interface().(SectionUnmarshaler); ok {
+		u = m
+	}
+
+	if u != nil {
+		if err := u.UnmarshalSection(section, spec); err != nil {
+			return err
+		}
+	}
+
 	for i := 0; i < outVal.NumField(); i++ {
 		fieldType := outVal.Type().Field(i)
 		name := fieldType.Name
+
+		// Skip unexported struct fields.
+		if !unicode.IsUpper([]rune(name)[0]) {
+			continue
+		}
 
 		if optionValue, ok := fieldType.Tag.Lookup("option"); ok && optionValue != "" {
 			name = optionValue
@@ -161,20 +200,17 @@ func decodeSectionToStruct(section Section, spec SectionSpec, outVal reflect.Val
 			}
 		}
 
-		name = strings.ToLower(name)
-
-		var optionSpec *OptionSpec
-		for _, opt := range spec {
-			if strings.ToLower(opt.Name) == name {
-				optionSpec = &opt
-				break
-			}
-		}
-		if optionSpec == nil {
-			return fmt.Errorf("Cannot decode into unknown option %q", name)
+		optionSpec, ok := spec.FindOption(name)
+		if !ok {
+			// TODO(ppacher): add a strict mode that errors out here.
+			continue
 		}
 
-		if err := decode(section.GetStringSlice(optionSpec.Name), optionSpec.Type, outVal.Field(i)); err != nil {
+		values := section.GetStringSlice(optionSpec.Name)
+		if len(values) == 0 && !optionSpec.Required {
+			continue
+		}
+		if err := decode(values, optionSpec.Type, outVal.Field(i)); err != nil {
 			return fmt.Errorf("failed to unmarshal into field %s: %w", fieldType.Name, err)
 		}
 	}
@@ -363,10 +399,6 @@ func decodeSlice(data []string, specType OptionType, outVal reflect.Value) error
 	outVal.Set(sliceVal)
 
 	return nil
-}
-
-func errInvalidType(specType OptionType, receiverType reflect.Type) error {
-	return fmt.Errorf("failed to decode option of type %s into variable type %s", specType.String(), receiverType.String())
 }
 
 // getKind returns the kind of value but normalized Int, Uint and Float varaints

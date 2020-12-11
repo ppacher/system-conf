@@ -2,6 +2,15 @@ package conf
 
 import "reflect"
 
+// SectionUnmarshaler describes the interface that can be
+// implemented to provide custom decoding of sections when
+// using FileSpec.Decode.
+// See OptionSpec for an example of how to use and implement
+// UnmarshalSection.
+type SectionUnmarshaler interface {
+	UnmarshalSection(sec Section, spec SectionSpec) error
+}
+
 // Decode a file into target following the file specification.
 func (spec FileSpec) Decode(file *File, target interface{}) error {
 	return decodeFile(file, spec, reflect.ValueOf(target).Elem())

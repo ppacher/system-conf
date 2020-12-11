@@ -3,6 +3,8 @@ package conf
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -25,7 +27,7 @@ type OptionSpec struct {
 	Description string `json:"description,omitempty"`
 
 	// Type defines the type of the option.
-	Type OptionType `json:"type,omitempty"`
+	Type OptionType `json:"type,omitempty" option:"-"`
 
 	// Required may be set to true if deploy tasks must
 	// specify this option.
@@ -45,9 +47,98 @@ type OptionSpec struct {
 // given section.
 type SectionSpec []OptionSpec
 
+// FindOption searches for the OptionSpec with name optName.
+func (specs SectionSpec) FindOption(optName string) (OptionSpec, bool) {
+	lower := strings.ToLower(optName)
+	for _, opt := range specs {
+		if strings.ToLower(opt.Name) == lower {
+			return opt, true
+		}
+	}
+
+	return OptionSpec{}, false
+}
+
+// HasOption returns true if the section spec defines an option
+// with name optName.
+func (specs SectionSpec) HasOption(optName string) bool {
+	_, ok := specs.FindOption(optName)
+	return ok
+}
+
 // FileSpec describes all sections and the allowed options
 // for each section.
 type FileSpec map[string]SectionSpec
+
+// FindSection searches the FileSpec for the section spec with
+// the given name.
+func (spec FileSpec) FindSection(name string) (SectionSpec, bool) {
+	key := strings.ToLower(name)
+	if sec, ok := spec[key]; ok {
+		return sec, true
+	}
+
+	for mk, mv := range spec {
+		if strings.ToLower(mk) == mk {
+			return mv, true
+		}
+	}
+
+	return nil, false
+}
+
+// Parse parses a configuration file from r, validates it against the spec
+// and unmarshals it into target. Users that want to utilize drop-in files
+// should take care of deserializing, validating, applying drop-ins
+// and decoding into target themself.
+func (spec FileSpec) Parse(path string, r io.Reader, target interface{}) error {
+	content, err := Deserialize(path, r)
+	if err != nil {
+		return fmt.Errorf("failed to load: %w", err)
+	}
+
+	if err := ValidateFile(content, spec); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
+	}
+
+	return spec.Decode(content, target)
+}
+
+// ParseFile is like Parse but opens the file at path.
+func (spec FileSpec) ParseFile(path string, target interface{}) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open: %w", err)
+	}
+	defer f.Close()
+
+	return spec.Parse(path, f, target)
+}
+
+// UnmarshalSection implements SectionUnmarshaller.
+func (spec *OptionSpec) UnmarshalSection(sec Section, sectionSpec SectionSpec) error {
+	type alias OptionSpec
+	if err := decodeSectionToStruct(sec, sectionSpec, reflect.ValueOf((*alias)(spec)).Elem()); err != nil {
+		return err
+	}
+
+	// only parse the type member if it's specified in the specs.
+	if sectionSpec.HasOption("Type") {
+		opt, err := sec.GetString("Type")
+		if err != nil {
+			return fmt.Errorf("Type: %w", err)
+		}
+
+		typePtr := TypeFromString(opt)
+		if typePtr == nil {
+			return fmt.Errorf("invalid type %q", opt)
+		}
+
+		spec.Type = *typePtr
+	}
+
+	return nil
+}
 
 // UnmarshalJSON unmarshals blob into spec.
 func (spec *OptionSpec) UnmarshalJSON(blob []byte) error {
@@ -97,8 +188,9 @@ func Prepare(sec Section, specs []OptionSpec) (Section, error) {
 	return copy, nil
 }
 
-// ValidateFile validates all sections in file and applies any default option
-// values. If specs is nil then ValidateFile is a no-op.
+// ValidateFile validates all sections in file and applies any
+// default option values. If specs is nil then ValidateFile is
+// a no-op.
 func ValidateFile(file *File, specs FileSpec) error {
 	if specs == nil {
 		return nil
@@ -120,8 +212,8 @@ func ValidateFile(file *File, specs FileSpec) error {
 	return nil
 }
 
-// ApplyDefaults will add the default value for each option that is not specified
-// but has an default set in it's spec.
+// ApplyDefaults will add the default value for each option that
+// is not specified but has an default set in it's spec.
 func ApplyDefaults(options Options, specs []OptionSpec) Options {
 	// Do nothing if specs is set to AllowAny.
 	if IsAllowAny(specs) {

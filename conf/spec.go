@@ -41,6 +41,14 @@ type OptionSpec struct {
 	Internal bool `json:"internal,omitempty"`
 }
 
+// SectionSpec describes all options that can be used in a
+// given section.
+type SectionSpec []OptionSpec
+
+// FileSpec describes all sections and the allowed options
+// for each section.
+type FileSpec map[string]SectionSpec
+
 // UnmarshalJSON unmarshals blob into spec.
 func (spec *OptionSpec) UnmarshalJSON(blob []byte) error {
 	type embed OptionSpec
@@ -91,7 +99,7 @@ func Prepare(sec Section, specs []OptionSpec) (Section, error) {
 
 // ValidateFile validates all sections in file and applies any default option
 // values. If specs is nil then ValidateFile is a no-op.
-func ValidateFile(file *File, specs map[string][]OptionSpec) error {
+func ValidateFile(file *File, specs FileSpec) error {
 	if specs == nil {
 		return nil
 	}

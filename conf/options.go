@@ -53,6 +53,17 @@ func (opts Options) GetString(name string) (string, error) {
 	return s, nil
 }
 
+// GetAs returns the value of name interpreted as specType.
+func (opts Options) GetAs(name string, specType OptionType) interface{} {
+	values := opts.GetStringSlice(name)
+
+	var x interface{}
+	if err := DecodeValues(values, specType, &x); err != nil {
+		panic(err)
+	}
+	return x
+}
+
 // GetStringSlice returns a slice of values specified for name.
 // If name must be specified at least once, use GetRequiredStringSlice.
 func (opts Options) GetStringSlice(name string) []string {

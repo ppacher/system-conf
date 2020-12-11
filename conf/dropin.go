@@ -24,7 +24,7 @@ var readDir func(path string) ([]os.FileInfo, error) = ioutil.ReadDir
 // to tasks with unique section names. That is, if a task specifies
 // the same action multiple times (like multiple [Copy] sections),
 // drop-ins cannot be applied to that task.
-func ApplyDropIns(t *File, dropins []*DropIn, sectionOptions map[string][]OptionSpec) error {
+func ApplyDropIns(t *File, dropins []*DropIn, sectionOptions FileSpec) error {
 	slm := make(map[string]*Section)
 	specs := buildSpecLookupMap(sectionOptions)
 
@@ -221,7 +221,7 @@ func DropInSearchPaths(unitName string, rootDir string) []string {
 	return paths
 }
 
-func buildSpecLookupMap(specs map[string][]OptionSpec) map[string]map[string]OptionSpec {
+func buildSpecLookupMap(specs FileSpec) map[string]map[string]OptionSpec {
 	r := make(map[string]map[string]OptionSpec)
 	for key, sec := range specs {
 		r[key] = make(map[string]OptionSpec)

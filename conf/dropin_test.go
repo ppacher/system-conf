@@ -80,7 +80,7 @@ func TestSearchDropinFiles(t *testing.T) {
 }
 
 func TestApplyDropIns(t *testing.T) {
-	specs := map[string][]OptionSpec{
+	specs := FileSpec{
 		"test": {
 			{
 				Type: StringType,
@@ -209,7 +209,7 @@ func TestApplyDropInsNotAllowed(t *testing.T) {
 				},
 			},
 		},
-		map[string][]OptionSpec{
+		FileSpec{
 			"test": nil,
 		},
 	)
@@ -232,7 +232,7 @@ func TestApplyDropInsSectionNotExists(t *testing.T) {
 				},
 			},
 		},
-		map[string][]OptionSpec{
+		FileSpec{
 			"test": nil,
 		},
 	)
@@ -264,7 +264,7 @@ func TestApplyDropInsOptionNotExists(t *testing.T) {
 				},
 			},
 		},
-		map[string][]OptionSpec{
+		FileSpec{
 			"test": nil,
 		},
 	)

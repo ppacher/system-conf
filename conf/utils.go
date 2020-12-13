@@ -193,6 +193,17 @@ func decodeSectionToStruct(section Section, spec SectionSpec, outVal reflect.Val
 			continue
 		}
 
+		// if we have an struct type here we may need to unmarshal the section into
+		// and embedded struct.
+		if fieldType.Anonymous {
+			if fieldType.Type.Kind() == reflect.Struct || (fieldType.Type.Kind() == reflect.Ptr && fieldType.Type.Elem().Kind() == reflect.Struct) {
+				if err := decodeSections(Sections{section}, spec, outVal.Field(i)); err != nil {
+					return fmt.Errorf("failed to unmarshal into anonymous field %s: %w", fieldType.Name, err)
+				}
+				continue
+			}
+		}
+
 		if optionValue, ok := fieldType.Tag.Lookup("option"); ok && optionValue != "" {
 			name = optionValue
 			if name == "-" {

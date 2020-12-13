@@ -79,7 +79,7 @@ func (spec FileSpec) FindSection(name string) (SectionSpec, bool) {
 	}
 
 	for mk, mv := range spec {
-		if strings.ToLower(mk) == mk {
+		if strings.ToLower(mk) == key {
 			return mv, true
 		}
 	}

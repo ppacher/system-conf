@@ -197,9 +197,9 @@ func ValidateFile(file *File, specs FileSpec) error {
 	}
 
 	for idx, section := range file.Sections {
-		secSpec, ok := specs[strings.ToLower(section.Name)]
+		secSpec, ok := specs.FindSection(section.Name)
 		if !ok {
-			return ErrUnknownSection
+			return fmt.Errorf("%s: %w", section.Name, ErrUnknownSection)
 		}
 
 		sec, err := Prepare(section, secSpec)

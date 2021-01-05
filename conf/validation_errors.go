@@ -10,6 +10,7 @@ var (
 	ErrInvalidBoolean          = errors.New("invalid boolean value")
 	ErrInvalidFloat            = errors.New("invalid floating point number)")
 	ErrInvalidNumber           = errors.New("invalid number")
+	ErrInvalidDuration         = errors.New("invalid duration")
 	ErrNoSections              = errors.New("task does not contain any sections")
 	ErrUnknownSection          = errors.New("unknown section")
 	ErrDropInSectionNotExists  = errors.New("section defined in drop-in does not exist")

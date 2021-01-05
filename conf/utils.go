@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -297,6 +298,10 @@ func decodeBasic(data []string, specType OptionType, outVal reflect.Value) error
 		decodeType = reflect.TypeOf([]float64{})
 	case BoolType:
 		decodeType = reflect.TypeOf(bool(true))
+	case DurationType:
+		decodeType = reflect.TypeOf(time.Duration(0))
+	case DurationSliceType:
+		decodeType = reflect.TypeOf([]time.Duration{})
 	default:
 		return fmt.Errorf("unsupported type: %s", specType.String())
 	}
@@ -327,13 +332,27 @@ func decodeBool(data string, specType OptionType, outVal reflect.Value) error {
 }
 
 func decodeInt(data string, specType OptionType, outVal reflect.Value) error {
-	if specType != IntType && specType != IntSliceType {
-		return errors.New("invalid type")
-	}
+	var (
+		val int64
+		err error
+	)
 
-	val, err := strconv.ParseInt(data, 0, 64)
-	if err != nil {
-		return err
+	switch specType {
+	case DurationType, DurationSliceType:
+		d, err := time.ParseDuration(data)
+		if err != nil {
+			return err
+		}
+		val = int64(d)
+
+	case IntType, IntSliceType:
+		val, err = strconv.ParseInt(data, 0, 64)
+		if err != nil {
+			return err
+		}
+
+	default:
+		return errors.New("invalid type")
 	}
 
 	outVal.SetInt(val)

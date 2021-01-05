@@ -19,13 +19,15 @@ type OptionType interface {
 
 // All supported option types.
 var (
-	StringType      = option("string    ", false)
-	StringSliceType = option("[]string  ", true)
-	BoolType        = option("bool      ", false)
-	IntType         = option("int       ", false)
-	IntSliceType    = option("[]int     ", true)
-	FloatType       = option("float     ", false)
-	FloatSliceType  = option("[]float   ", true)
+	StringType        = option("string    ", false)
+	StringSliceType   = option("[]string  ", true)
+	BoolType          = option("bool      ", false)
+	IntType           = option("int       ", false)
+	IntSliceType      = option("[]int     ", true)
+	FloatType         = option("float     ", false)
+	FloatSliceType    = option("[]float   ", true)
+	DurationType      = option("duration", false)
+	DurationSliceType = option("[]duration", true)
 )
 
 type optionType struct {
@@ -68,6 +70,10 @@ func TypeFromString(str string) *OptionType {
 		return &FloatType
 	case "[]float":
 		return &FloatSliceType
+	case "duration":
+		return &DurationType
+	case "[]duration":
+		return &DurationSliceType
 	}
 
 	return nil

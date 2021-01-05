@@ -30,6 +30,12 @@ func TestCheckValue(t *testing.T) {
 		{FloatSliceType, "0.1e10", nil},
 		{FloatType, ".INVALID", ErrInvalidFloat},
 		{FloatSliceType, "0.1eINVALID", ErrInvalidFloat},
+		{DurationType, "5m", nil},
+		{DurationType, "10h6s", nil},
+		{DurationType, "asdf", ErrInvalidDuration},
+		{DurationSliceType, "5m", nil},
+		{DurationSliceType, "10h6s", nil},
+		{DurationSliceType, "asdf", ErrInvalidDuration},
 
 		{StringType, "", nil}, // empty strings ARE VALID
 	}

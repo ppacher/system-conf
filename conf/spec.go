@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // OptionSpec describes an option
@@ -350,6 +351,10 @@ func checkValue(val string, optType OptionType) error {
 		// That is, hex (0xYY), binary (0bYY) and octal (0YY)
 		if _, err := strconv.ParseInt(val, 0, 64); err != nil {
 			return ErrInvalidNumber
+		}
+	case DurationType, DurationSliceType:
+		if _, err := time.ParseDuration(val); err != nil {
+			return ErrInvalidDuration
 		}
 	}
 

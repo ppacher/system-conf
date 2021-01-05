@@ -2,6 +2,7 @@ package conf_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ppacher/system-conf/conf"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,10 @@ func TestFileSpecDecode(t *testing.T) {
 				Name: "Rotate",
 				Type: conf.BoolType,
 			},
+			{
+				Name: "MaxAge",
+				Type: conf.DurationType,
+			},
 		},
 	}
 
@@ -39,6 +44,7 @@ func TestFileSpecDecode(t *testing.T) {
 	type TestLogFile struct {
 		Path       string
 		RotateFile bool `option:"Rotate"`
+		MaxAge     time.Duration
 	}
 
 	type Test struct {
@@ -76,6 +82,10 @@ func TestFileSpecDecode(t *testing.T) {
 						Name:  "Rotate",
 						Value: "yes",
 					},
+					{
+						Name:  "MaxAge",
+						Value: "10h",
+					},
 				},
 			},
 			{
@@ -88,6 +98,10 @@ func TestFileSpecDecode(t *testing.T) {
 					{
 						Name:  "Rotate",
 						Value: "no",
+					},
+					{
+						Name:  "MaxAge",
+						Value: "24h",
 					},
 				},
 			},
@@ -107,10 +121,12 @@ func TestFileSpecDecode(t *testing.T) {
 			{
 				Path:       "/var/log/path1",
 				RotateFile: true,
+				MaxAge:     time.Hour * 10,
 			},
 			{
 				Path:       "/var/log/path2",
 				RotateFile: false,
+				MaxAge:     time.Hour * 24,
 			},
 		},
 	}, target)

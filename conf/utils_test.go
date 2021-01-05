@@ -2,6 +2,7 @@ package conf_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ppacher/system-conf/conf"
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,10 @@ func TestDecode(t *testing.T) {
 		err := conf.DecodeValues([]string{"10"}, conf.IntType, &x)
 		assert.NoError(t, err)
 		assert.Equal(t, 10, x)
+
+		err = conf.DecodeValues([]string{"10m"}, conf.DurationType, &x)
+		assert.NoError(t, err)
+		assert.Equal(t, int(time.Minute*10), x)
 	})
 
 	t.Run("float", func(t *testing.T) {
@@ -48,5 +53,10 @@ func TestDecode(t *testing.T) {
 		err = conf.DecodeValues([]string{"1.0", "2.1", "3.2"}, conf.FloatSliceType, &x)
 		assert.NoError(t, err)
 		assert.Equal(t, []float64{1.0, 2.1, 3.2}, x)
+
+		x = nil
+		err = conf.DecodeValues([]string{"10m5s"}, conf.DurationType, &x)
+		assert.NoError(t, err)
+		assert.Equal(t, time.Minute*10+time.Second*5, x)
 	})
 }

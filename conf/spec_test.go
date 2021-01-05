@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -174,54 +173,6 @@ func TestValidateOption(t *testing.T) {
 		err := ValidateOption(c.V, c.I)
 		if !errors.Is(err, c.E) {
 			t.Errorf("cases #%d (input=%v): expected error to be '%v', got '%v'", idx, c.V, c.E, err)
-		}
-	}
-}
-
-func TestJSON(t *testing.T) {
-	cases := []struct {
-		I string
-		V OptionType
-		E error
-	}{
-		{
-			`{"type": "string"}`,
-			StringType,
-			nil,
-		},
-		{
-			`{"type": ""}`,
-			nil,
-			nil,
-		},
-		{
-			`{}`,
-			nil,
-			nil,
-		},
-		{
-			`{"type": "[]int"}`,
-			IntSliceType,
-			nil,
-		},
-		{
-			`{"type": "unknown"}`,
-			nil,
-			ErrUnknownOptionType,
-		},
-	}
-
-	for idx, c := range cases {
-		var o OptionSpec
-		err := json.Unmarshal([]byte(c.I), &o)
-
-		if !errors.Is(err, c.E) {
-			t.Logf("case %d:Expected error to be %v but got %v", idx, c.E, err)
-			t.Fail()
-		}
-
-		if c.E == nil {
-			assert.Equalf(t, c.V, o.Type, "case %d", idx)
 		}
 	}
 }

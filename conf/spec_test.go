@@ -116,7 +116,7 @@ func TestApplyDefaults(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		opts := ApplyDefaults(c.O, []OptionSpec{c.I})
+		opts := ApplyDefaults(c.O, SectionSpec{c.I})
 
 		values := opts.GetStringSlice(c.I.Name)
 
@@ -228,12 +228,12 @@ func TestJSON(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	cases := []struct {
-		I []OptionSpec
+		I SectionSpec
 		V []Option
 		E error
 	}{
 		{
-			[]OptionSpec{
+			SectionSpec{
 				{Name: "Option1", Type: StringType},
 			},
 			[]Option{
@@ -242,7 +242,7 @@ func TestValidate(t *testing.T) {
 			nil,
 		},
 		{
-			[]OptionSpec{
+			SectionSpec{
 				{Name: "Option1", Type: StringSliceType},
 			},
 			[]Option{
@@ -252,7 +252,7 @@ func TestValidate(t *testing.T) {
 			nil,
 		},
 		{
-			[]OptionSpec{
+			SectionSpec{
 				{Name: "Option1", Type: StringType},
 			},
 			[]Option{
@@ -262,14 +262,7 @@ func TestValidate(t *testing.T) {
 			ErrOptionAllowedOnce,
 		},
 		{
-			AllowAny,
-			[]Option{
-				{Name: "Option1", Value: "value"},
-			},
-			nil,
-		},
-		{
-			[]OptionSpec{
+			SectionSpec{
 				{Name: "Option1", Type: StringType},
 			},
 			[]Option{
@@ -278,7 +271,7 @@ func TestValidate(t *testing.T) {
 			ErrOptionNotExists,
 		},
 		{
-			[]OptionSpec{
+			SectionSpec{
 				{Name: "Option1", Type: StringType, Required: true},
 			},
 			nil,

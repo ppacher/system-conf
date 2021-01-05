@@ -13,7 +13,7 @@ import (
 // decodeFile decodes all sections of file as defined in spec into
 // outVal. Note that outVal must be a direct or indirect struct
 // type. outVal may be a nil struct-type value.
-func decodeFile(file *File, spec FileSpec, outVal reflect.Value) error {
+func decodeFile(file *File, spec SectionRegistry, outVal reflect.Value) error {
 	kind := getKind(outVal)
 
 	if kind == reflect.Ptr {
@@ -44,7 +44,7 @@ func decodeFile(file *File, spec FileSpec, outVal reflect.Value) error {
 	return decodeFileToStruct(file, spec, outVal)
 }
 
-func decodeFileToStruct(file *File, spec FileSpec, outVal reflect.Value) error {
+func decodeFileToStruct(file *File, spec SectionRegistry, outVal reflect.Value) error {
 	for i := 0; i < outVal.NumField(); i++ {
 		fieldType := outVal.Type().Field(i)
 		name := fieldType.Name
@@ -69,7 +69,7 @@ func decodeFileToStruct(file *File, spec FileSpec, outVal reflect.Value) error {
 			}
 		}
 
-		secSpec, ok := spec.FindSection(name)
+		secSpec, ok := spec.OptionsForSection(strings.ToLower(name))
 		if !ok {
 			return fmt.Errorf("no specification for section %q", name)
 		}
@@ -91,7 +91,7 @@ func decodeFileToStruct(file *File, spec FileSpec, outVal reflect.Value) error {
 	return nil
 }
 
-func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) error {
+func decodeSections(sections Sections, spec OptionRegistry, outVal reflect.Value) error {
 	kind := getKind(outVal)
 
 	if kind == reflect.Ptr {
@@ -164,7 +164,7 @@ func decodeSections(sections Sections, spec SectionSpec, outVal reflect.Value) e
 	return decodeSectionToStruct(sections[0], spec, outVal)
 }
 
-func decodeSectionToStruct(section Section, spec SectionSpec, outVal reflect.Value) error {
+func decodeSectionToStruct(section Section, spec OptionRegistry, outVal reflect.Value) error {
 	// If outVal is addressable and implements a SectionUnmarshaler
 	// than we use UnmarshalSection instead of a reflection based
 	// method.
@@ -212,7 +212,7 @@ func decodeSectionToStruct(section Section, spec SectionSpec, outVal reflect.Val
 			}
 		}
 
-		optionSpec, ok := spec.FindOption(name)
+		optionSpec, ok := spec.GetOption(strings.ToLower(name))
 		if !ok {
 			// TODO(ppacher): add a strict mode that errors out here.
 			continue

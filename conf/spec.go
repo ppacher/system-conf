@@ -48,11 +48,10 @@ type OptionSpec struct {
 // given section.
 type SectionSpec []OptionSpec
 
-// FindOption searches for the OptionSpec with name optName.
-func (specs SectionSpec) FindOption(optName string) (OptionSpec, bool) {
-	lower := strings.ToLower(optName)
+// GetOption searches for the OptionSpec with name optName.
+func (specs SectionSpec) GetOption(optName string) (OptionSpec, bool) {
 	for _, opt := range specs {
-		if strings.ToLower(opt.Name) == lower {
+		if strings.ToLower(opt.Name) == optName {
 			return opt, true
 		}
 	}
@@ -63,17 +62,23 @@ func (specs SectionSpec) FindOption(optName string) (OptionSpec, bool) {
 // HasOption returns true if the section spec defines an option
 // with name optName.
 func (specs SectionSpec) HasOption(optName string) bool {
-	_, ok := specs.FindOption(optName)
+	_, ok := specs.GetOption(optName)
 	return ok
 }
 
+// All returns all options defined for the section.
+func (specs SectionSpec) All() []OptionSpec {
+	return ([]OptionSpec)(specs)
+}
+
 // FileSpec describes all sections and the allowed options
-// for each section.
+// for each section. It implements the SectionRegistry
+// interface.
 type FileSpec map[string]SectionSpec
 
-// FindSection searches the FileSpec for the section spec with
-// the given name.
-func (spec FileSpec) FindSection(name string) (SectionSpec, bool) {
+// OptionsForSection searches the FileSpec for the section spec with
+// the given name. It implements the SectionRegistry.
+func (spec FileSpec) OptionsForSection(name string) (OptionRegistry, bool) {
 	key := strings.ToLower(name)
 	if sec, ok := spec[key]; ok {
 		return sec, true
@@ -117,7 +122,7 @@ func (spec FileSpec) ParseFile(path string, target interface{}) error {
 }
 
 // UnmarshalSection implements SectionUnmarshaller.
-func (spec *OptionSpec) UnmarshalSection(sec Section, sectionSpec SectionSpec) error {
+func (spec *OptionSpec) UnmarshalSection(sec Section, sectionSpec OptionRegistry) error {
 	type alias OptionSpec
 	if err := decodeSectionToStruct(sec, sectionSpec, reflect.ValueOf((*alias)(spec)).Elem()); err != nil {
 		return err
@@ -164,19 +169,9 @@ func (spec *OptionSpec) UnmarshalJSON(blob []byte) error {
 	return nil
 }
 
-// AllowAny is a special option that can be used to disable
-// option validation. Only use during development.
-var AllowAny = []OptionSpec{}
-
-// IsAllowAny returns true if spec is the constant AllowAny
-// identifier.
-func IsAllowAny(spec []OptionSpec) bool {
-	return reflect.ValueOf(spec).Pointer() == reflect.ValueOf(AllowAny).Pointer()
-}
-
 // Prepare prepares the sec by applying default values and validating
 // options against a set of option specs.
-func Prepare(sec Section, specs []OptionSpec) (Section, error) {
+func Prepare(sec Section, specs OptionRegistry) (Section, error) {
 	var copy = Section{
 		Name:    sec.Name,
 		Options: ApplyDefaults(sec.Options, specs),
@@ -192,13 +187,13 @@ func Prepare(sec Section, specs []OptionSpec) (Section, error) {
 // ValidateFile validates all sections in file and applies any
 // default option values. If specs is nil then ValidateFile is
 // a no-op.
-func ValidateFile(file *File, specs FileSpec) error {
+func ValidateFile(file *File, specs SectionRegistry) error {
 	if specs == nil {
 		return nil
 	}
 
 	for idx, section := range file.Sections {
-		secSpec, ok := specs.FindSection(section.Name)
+		secSpec, ok := specs.OptionsForSection(strings.ToLower(section.Name))
 		if !ok {
 			return fmt.Errorf("%s: %w", section.Name, ErrUnknownSection)
 		}
@@ -215,13 +210,8 @@ func ValidateFile(file *File, specs FileSpec) error {
 
 // ApplyDefaults will add the default value for each option that
 // is not specified but has an default set in it's spec.
-func ApplyDefaults(options Options, specs []OptionSpec) Options {
-	// Do nothing if specs is set to AllowAny.
-	if IsAllowAny(specs) {
-		return options
-	}
-
-	for _, spec := range specs {
+func ApplyDefaults(options Options, specs OptionRegistry) Options {
+	for _, spec := range specs.All() {
 		if spec.Required {
 			// if it's required we can skip that here because
 			// Validate() would return an error anyway.
@@ -259,14 +249,9 @@ func ApplyDefaults(options Options, specs []OptionSpec) Options {
 
 // ValidateOptions validates if all unit options specified in sec conform
 // to the specification options.
-func ValidateOptions(options Options, specs []OptionSpec) error {
-	if IsAllowAny(specs) {
-		return nil
-	}
-
-	// build a lookup map for all options specs.
+func ValidateOptions(options Options, specs OptionRegistry) error {
 	lm := make(map[string]OptionSpec)
-	for _, spec := range specs {
+	for _, spec := range specs.All() {
 		lm[strings.ToLower(spec.Name)] = spec
 	}
 
@@ -279,7 +264,7 @@ func ValidateOptions(options Options, specs []OptionSpec) error {
 
 	// validate
 	for name, values := range gv {
-		spec, ok := lm[name]
+		spec, ok := lm[strings.ToLower(name)]
 		if !ok {
 			// TODO(ppacher): we always use the lowercase version for the
 			// error message here, use the original one instead.

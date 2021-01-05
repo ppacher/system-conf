@@ -8,7 +8,7 @@ import "reflect"
 // See OptionSpec for an example of how to use and implement
 // UnmarshalSection.
 type SectionUnmarshaler interface {
-	UnmarshalSection(sec Section, spec SectionSpec) error
+	UnmarshalSection(sec Section, spec OptionRegistry) error
 }
 
 // Decode a file into target following the file specification.

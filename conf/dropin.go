@@ -50,7 +50,7 @@ func ApplyDropIns(t *File, dropins []*DropIn, secReg SectionRegistry) error {
 			}
 
 			sectionSpec, ok := secReg.OptionsForSection(sn)
-			if s == nil || !ok {
+			if sectionSpec == nil || !ok {
 				return fmt.Errorf("%s: %w", sn, ErrDropInSectionNotAllowed)
 			}
 
@@ -72,6 +72,9 @@ func ApplyDropIns(t *File, dropins []*DropIn, secReg SectionRegistry) error {
 }
 
 func mergeSections(s *Section, dropInSec Section, optReg OptionRegistry) error {
+	if optReg == nil {
+		return ErrNoOptions
+	}
 	// build a lookup map for the option values in this
 	// drop-in section
 	olm := make(map[string][]Option)

@@ -15,4 +15,5 @@ var (
 	ErrUnknownSection          = errors.New("unknown section")
 	ErrDropInSectionNotExists  = errors.New("section defined in drop-in does not exist")
 	ErrDropInSectionNotAllowed = errors.New("drop-ins not allowed for not-unique sections")
+	ErrNoOptions               = errors.New("no options defined")
 )

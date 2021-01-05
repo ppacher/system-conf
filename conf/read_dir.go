@@ -10,7 +10,7 @@ import (
 // ReadDir parses all files in directory that end in suffix. The sections of each file
 // are validated against the spec map using the lowercase section name as the map key.
 // If spec is nil no validation is performed.
-func ReadDir(directory, suffix string, spec FileSpec) ([]*File, error) {
+func ReadDir(directory, suffix string, spec SectionRegistry) ([]*File, error) {
 	entries, err := ioutil.ReadDir(directory)
 	if err != nil {
 		return nil, err

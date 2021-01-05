@@ -81,7 +81,7 @@ func TestSearchDropinFiles(t *testing.T) {
 
 func TestApplyDropIns(t *testing.T) {
 	specs := FileSpec{
-		"test": {
+		"test": SectionSpec{
 			{
 				Type: StringType,
 				Name: "Single",

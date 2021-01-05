@@ -24,9 +24,8 @@ var readDir func(path string) ([]os.FileInfo, error) = ioutil.ReadDir
 // to tasks with unique section names. That is, if a task specifies
 // the same action multiple times (like multiple [Copy] sections),
 // drop-ins cannot be applied to that task.
-func ApplyDropIns(t *File, dropins []*DropIn, sectionOptions FileSpec) error {
+func ApplyDropIns(t *File, dropins []*DropIn, secReg SectionRegistry) error {
 	slm := make(map[string]*Section)
-	specs := buildSpecLookupMap(sectionOptions)
 
 	for idx := range t.Sections {
 		sec := t.Sections[idx]
@@ -50,7 +49,7 @@ func ApplyDropIns(t *File, dropins []*DropIn, sectionOptions FileSpec) error {
 				return fmt.Errorf("%s: %w", sn, ErrDropInSectionNotExists)
 			}
 
-			sectionSpec, ok := specs[sn]
+			sectionSpec, ok := secReg.OptionsForSection(sn)
 			if s == nil || !ok {
 				return fmt.Errorf("%s: %w", sn, ErrDropInSectionNotAllowed)
 			}
@@ -72,7 +71,7 @@ func ApplyDropIns(t *File, dropins []*DropIn, sectionOptions FileSpec) error {
 	return nil
 }
 
-func mergeSections(s *Section, dropInSec Section, sectionSpec map[string]OptionSpec) error {
+func mergeSections(s *Section, dropInSec Section, optReg OptionRegistry) error {
 	// build a lookup map for the option values in this
 	// drop-in section
 	olm := make(map[string][]Option)
@@ -83,7 +82,8 @@ func mergeSections(s *Section, dropInSec Section, sectionSpec map[string]OptionS
 
 	// update each option, one after the other
 	for optName, opts := range olm {
-		optSpec, ok := sectionSpec[optName]
+		optLowerName := strings.ToLower(optName)
+		optSpec, ok := optReg.GetOption(optLowerName)
 		if !ok {
 			return fmt.Errorf("%s: %w", optName, ErrOptionNotExists)
 		}
@@ -95,7 +95,7 @@ func mergeSections(s *Section, dropInSec Section, sectionSpec map[string]OptionS
 		if !optSpec.Type.IsSliceType() || opts[0].Value == "" {
 			var newOpts Options
 			for _, opt := range s.Options {
-				if strings.ToLower(opt.Name) != optName {
+				if strings.ToLower(opt.Name) != optLowerName {
 					newOpts = append(newOpts, opt)
 				}
 			}
@@ -219,15 +219,4 @@ func DropInSearchPaths(unitName string, rootDir string) []string {
 	// add <rootDir>/foo-bar-baz.task.d
 	paths = append(paths, filepath.Join(rootDir, unitName+".d"))
 	return paths
-}
-
-func buildSpecLookupMap(specs FileSpec) map[string]map[string]OptionSpec {
-	r := make(map[string]map[string]OptionSpec)
-	for key, sec := range specs {
-		r[key] = make(map[string]OptionSpec)
-		for _, opt := range sec {
-			r[key][strings.ToLower(opt.Name)] = opt
-		}
-	}
-	return r
 }

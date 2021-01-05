@@ -11,7 +11,7 @@ import (
 // FileSpec describes all sections and the allowed options
 // for each section. It implements the SectionRegistry
 // interface.
-type FileSpec map[string]SectionSpec
+type FileSpec map[string]OptionRegistry
 
 // OptionsForSection searches the FileSpec for the section spec with
 // the given name. It implements the SectionRegistry.

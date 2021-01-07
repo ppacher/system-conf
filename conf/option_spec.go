@@ -47,7 +47,7 @@ func (spec *OptionSpec) UnmarshalSection(sec Section, sectionSpec OptionRegistry
 	}
 
 	// only parse the type member if it's specified in the specs.
-	if sectionSpec.HasOption("Type") {
+	if sectionSpec.HasOption("type") {
 		opt, err := sec.GetString("Type")
 		if err != nil {
 			return fmt.Errorf("Type: %w", err)

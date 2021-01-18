@@ -42,6 +42,19 @@ func ConvertToFile(x interface{}, path string) (*File, error) {
 	return f, nil
 }
 
+// EncodeToOptions encodes the value from x into one or more options
+// with the given name.
+func EncodeToOptions(name string, x interface{}) (Options, error) {
+	val := reflect.ValueOf(x)
+	opts := new(Options)
+
+	if err := encodeBasic(val, name, opts); err != nil {
+		return nil, err
+	}
+
+	return *opts, nil
+}
+
 func encodeFile(val reflect.Value, result *File) error {
 	kind := getKind(val)
 

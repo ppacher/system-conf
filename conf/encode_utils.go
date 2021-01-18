@@ -76,7 +76,7 @@ func encodeFile(val reflect.Value, result *File) error {
 			}
 		}
 
-		if err := encodeSection(fieldValue, name, result); err != nil {
+		if err := encodeSection(fieldValue, name, result, nil); err != nil {
 			return fmt.Errorf("failed to encode %s: %w", name, err)
 		}
 
@@ -84,15 +84,15 @@ func encodeFile(val reflect.Value, result *File) error {
 	return nil
 }
 
-func encodeSection(val reflect.Value, name string, result *File) error {
+func encodeSection(val reflect.Value, name string, result *File, opts *Options) error {
 	kind := getKind(val)
 	if kind == reflect.Ptr {
-		return encodeSection(reflect.Indirect(val), name, result)
+		return encodeSection(reflect.Indirect(val), name, result, opts)
 	}
 
 	if kind == reflect.Slice {
 		for i := 0; i < val.Len(); i++ {
-			if err := encodeSection(val.Index(i), name, result); err != nil {
+			if err := encodeSection(val.Index(i), name, result, opts); err != nil {
 				return fmt.Errorf("failed to encode section at index %d: %w", i, err)
 			}
 		}
@@ -101,10 +101,14 @@ func encodeSection(val reflect.Value, name string, result *File) error {
 	}
 
 	if kind != reflect.Struct {
-		return fmt.Errorf("cannot decode section from %s, expected a struct", kind)
+		return fmt.Errorf("cannot encode section from %s, expected a struct", kind)
 	}
 
-	var opts Options
+	inline := true
+	if opts == nil {
+		opts = new(Options)
+		inline = false
+	}
 
 	for i := 0; i < val.NumField(); i++ {
 		fieldValue := val.Field(i)
@@ -128,15 +132,17 @@ func encodeSection(val reflect.Value, name string, result *File) error {
 			}
 		}
 
-		if err := encodeBasic(fieldValue, name, &opts); err != nil {
+		if err := encodeBasic(fieldValue, name, opts); err != nil {
 			return fmt.Errorf("cannot encode value of option %s: %w", name, err)
 		}
 	}
 
-	result.Sections = append(result.Sections, Section{
-		Name:    name,
-		Options: opts,
-	})
+	if !inline {
+		result.Sections = append(result.Sections, Section{
+			Name:    name,
+			Options: *opts,
+		})
+	}
 
 	return nil
 }
@@ -168,6 +174,8 @@ func encodeBasic(val reflect.Value, name string, result *Options) error {
 		value = strings.TrimRight(fmt.Sprintf("%f", x), "0")
 	case reflect.String:
 		value = x.(string)
+	case reflect.Struct: // TODO(ppacher): we should only allow anonymous fields here
+		return encodeSection(val, name, nil, result)
 	default:
 		return fmt.Errorf("unsupported basic type %s", kind)
 	}

@@ -17,7 +17,8 @@ func WriteSectionsTo(sections Sections, w io.Writer) error {
 		}
 
 		for _, opt := range sec.Options {
-			if _, err := fmt.Fprintf(w, "%s= %s", opt.Name, opt.Value); err != nil {
+			escaped := strings.ReplaceAll(opt.Value, "\n", "\\\n\t")
+			if _, err := fmt.Fprintf(w, "%s= %s", opt.Name, escaped); err != nil {
 				return err
 			}
 		}

@@ -18,7 +18,7 @@ func WriteSectionsTo(sections Sections, w io.Writer) error {
 
 		for _, opt := range sec.Options {
 			escaped := strings.ReplaceAll(opt.Value, "\n", "\\\n\t")
-			if _, err := fmt.Fprintf(w, "%s= %s", opt.Name, escaped); err != nil {
+			if _, err := fmt.Fprintf(w, "%s= %s\n", opt.Name, escaped); err != nil {
 				return err
 			}
 		}
@@ -48,7 +48,7 @@ func EncodeToOptions(name string, x interface{}) (Options, error) {
 	val := reflect.ValueOf(x)
 	opts := new(Options)
 
-	if err := encodeBasic(val, name, opts); err != nil {
+	if err := encodeBasic(val, name, opts, false); err != nil {
 		return nil, err
 	}
 
@@ -145,12 +145,12 @@ func encodeSection(val reflect.Value, name string, result *File, opts *Options) 
 			}
 		}
 
-		if err := encodeBasic(fieldValue, name, opts); err != nil {
+		if err := encodeBasic(fieldValue, name, opts, false); err != nil {
 			return fmt.Errorf("cannot encode value of option %s: %w", name, err)
 		}
 	}
 
-	if !inline {
+	if !inline && len(*opts) > 0 {
 		result.Sections = append(result.Sections, Section{
 			Name:    name,
 			Options: *opts,
@@ -160,10 +160,17 @@ func encodeSection(val reflect.Value, name string, result *File, opts *Options) 
 	return nil
 }
 
-func encodeBasic(val reflect.Value, name string, result *Options) error {
+func encodeBasic(val reflect.Value, name string, result *Options, includeZeroValues bool) error {
+	// skip encoding if we have the zero value
+	if !includeZeroValues {
+		if val.IsZero() {
+			return nil
+		}
+	}
+
 	kind := getKind(val)
 	if kind == reflect.Ptr {
-		return encodeBasic(reflect.Indirect(val), name, result)
+		return encodeBasic(reflect.Indirect(val), name, result, includeZeroValues)
 	}
 
 	var value string
@@ -173,7 +180,7 @@ func encodeBasic(val reflect.Value, name string, result *Options) error {
 	case reflect.Slice:
 		for i := 0; i < val.Len(); i++ {
 			elem := val.Index(i)
-			if err := encodeBasic(elem, name, result); err != nil {
+			if err := encodeBasic(elem, name, result, true); err != nil {
 				return fmt.Errorf("failed to encode slice: %w", err)
 			}
 		}

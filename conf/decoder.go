@@ -19,3 +19,9 @@ type SectionUnmarshaler interface {
 func DecodeValues(data []string, specType OptionType, receiver interface{}) error {
 	return decode(data, specType, reflect.ValueOf(receiver).Elem())
 }
+
+// DecodeSections decodes a slice of sections into receiver. Only options defined
+// in registry are allowed and permitted.
+func DecodeSections(sections []Section, registry OptionRegistry, receiver interface{}) error {
+	return decodeSections(sections, registry, reflect.ValueOf(receiver).Elem())
+}

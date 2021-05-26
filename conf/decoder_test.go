@@ -109,7 +109,7 @@ func TestFileSpecDecode(t *testing.T) {
 	}
 
 	var target Test
-	err := spec.Decode(f, &target)
+	err := conf.DecodeFile(f, &target, spec)
 	assert.NoError(t, err)
 
 	assert.Equal(t, Test{

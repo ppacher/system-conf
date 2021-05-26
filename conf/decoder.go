@@ -25,3 +25,8 @@ func DecodeValues(data []string, specType OptionType, receiver interface{}) erro
 func DecodeSections(sections []Section, registry OptionRegistry, receiver interface{}) error {
 	return decodeSections(sections, registry, reflect.ValueOf(receiver).Elem())
 }
+
+// Decode a file into target following the file specification.
+func DecodeFile(file *File, target interface{}, spec SectionRegistry) error {
+	return decodeFile(file, spec, reflect.ValueOf(target).Elem())
+}

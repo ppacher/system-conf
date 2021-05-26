@@ -54,7 +54,7 @@ func TestEncodeSections(t *testing.T) {
 		{
 			Name: "Sec1",
 			Options: conf.Options{
-				{Name: "Bool", Value: "false"},
+				// Bool is missing because we drop zero-values
 				{Name: "Int", Value: "10"},
 				{Name: "Float", Value: "0.1"},
 				{Name: "String", Value: "test"},

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"strings"
 )
 
@@ -44,12 +43,7 @@ func (spec FileSpec) Parse(path string, r io.Reader, target interface{}) error {
 		return fmt.Errorf("validation failed: %w", err)
 	}
 
-	return spec.Decode(content, target)
-}
-
-// Decode a file into target following the file specification.
-func (spec FileSpec) Decode(file *File, target interface{}) error {
-	return decodeFile(file, spec, reflect.ValueOf(target).Elem())
+	return DecodeFile(content, target, spec)
 }
 
 // ParseFile is like Parse but opens the file at path.

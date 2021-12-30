@@ -37,6 +37,23 @@ type OptionSpec struct {
 	// Internal may be set to true to omit the option from
 	// the help page.
 	Internal bool `json:"internal,omitempty"`
+
+	// Annotations can be used to add arbitrary metadata to
+	// option definitions. For example, such annotations can
+	// be later used in help or documentation generators.
+	// Note that it is recommended to ensure annotation values
+	// are JSON or Gob serializable.
+	Annotations map[string]interface{}
+}
+
+// HasAnnotation returns true if spec has an annotation with the
+// given name.
+func (spec *OptionSpec) HasAnnotation(name string) bool {
+	if spec.Annotations == nil {
+		return false
+	}
+	_, ok := spec.Annotations[name]
+	return ok
 }
 
 // UnmarshalSection implements SectionUnmarshaller.

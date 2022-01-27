@@ -21,9 +21,9 @@ type DropIn File
 var readDir func(path string) ([]os.FileInfo, error) = ioutil.ReadDir
 
 // ApplyDropIns applies all dropins on t. DropIns can only be applied
-// to tasks with unique section names. That is, if a task specifies
-// the same action multiple times (like multiple [Copy] sections),
-// drop-ins cannot be applied to that task.
+// to files with unique section names. That is, if a file specifies
+// the same section multiple times (like multiple [Copy] sections),
+// drop-ins cannot be applied to that file.
 func ApplyDropIns(t *File, dropins []*DropIn, secReg SectionRegistry) error {
 	slm := make(map[string]*Section)
 

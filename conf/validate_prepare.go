@@ -7,15 +7,22 @@ import (
 	"time"
 )
 
+// ValidationConfig can be passed to ValidateFile and ValidateOptions
+// to allow for unknown sections or configuration options.
+type ValidationConfig struct {
+	IgnoreUnknownSections bool
+	IgnoreUnknownOptions  bool
+}
+
 // Prepare prepares the sec by applying default values and validating
 // options against a set of option specs.
-func Prepare(sec Section, specs OptionRegistry) (Section, error) {
+func Prepare(sec Section, specs OptionRegistry, opts ...ValidationConfig) (Section, error) {
 	var copy = Section{
 		Name:    sec.Name,
 		Options: ApplyDefaults(sec.Options, specs),
 	}
 
-	if err := ValidateOptions(sec.Options, specs); err != nil {
+	if err := ValidateOptions(sec.Options, specs, opts...); err != nil {
 		return copy, err
 	}
 
@@ -25,7 +32,7 @@ func Prepare(sec Section, specs OptionRegistry) (Section, error) {
 // ValidateFile validates all sections in file and applies any
 // default option values. If specs is nil then ValidateFile is
 // a no-op.
-func ValidateFile(file *File, specs SectionRegistry) error {
+func ValidateFile(file *File, specs SectionRegistry, opts ...ValidationConfig) error {
 	if specs == nil {
 		return nil
 	}
@@ -33,14 +40,20 @@ func ValidateFile(file *File, specs SectionRegistry) error {
 	for idx, section := range file.Sections {
 		secSpec, ok := specs.OptionsForSection(strings.ToLower(section.Name))
 		if !ok {
-			return fmt.Errorf("%s: %w", section.Name, ErrUnknownSection)
+			if len(opts) == 0 || !opts[0].IgnoreUnknownSections {
+				return fmt.Errorf("%s: %w", section.Name, ErrUnknownSection)
+			}
+
+			// copy the section as it is because we cannot validate it
+			file.Sections[idx] = section
+		} else {
+			sec, err := Prepare(section, secSpec, opts...)
+			if err != nil {
+				return err
+			}
+			file.Sections[idx] = sec
 		}
 
-		sec, err := Prepare(section, secSpec)
-		if err != nil {
-			return err
-		}
-		file.Sections[idx] = sec
 	}
 
 	return nil
@@ -87,7 +100,7 @@ func ApplyDefaults(options Options, specs OptionRegistry) Options {
 
 // ValidateOptions validates if all unit options specified in sec conform
 // to the specification options.
-func ValidateOptions(options Options, specs OptionRegistry) error {
+func ValidateOptions(options Options, specs OptionRegistry, opts ...ValidationConfig) error {
 	lm := make(map[string]OptionSpec)
 	for _, spec := range specs.All() {
 		lm[strings.ToLower(spec.Name)] = spec
@@ -106,17 +119,19 @@ func ValidateOptions(options Options, specs OptionRegistry) error {
 		if !ok {
 			// TODO(ppacher): we always use the lowercase version for the
 			// error message here, use the original one instead.
-			return fmt.Errorf("%s: %w", name, ErrOptionNotExists)
-		}
+			if len(opts) == 0 || !opts[0].IgnoreUnknownOptions {
+				return fmt.Errorf("%s: %w", name, ErrOptionNotExists)
+			}
+		} else {
+			if err := ValidateOption(values, spec); err != nil {
+				return fmt.Errorf("%s: %w", spec.Name, err)
+			}
 
-		if err := ValidateOption(values, spec); err != nil {
-			return fmt.Errorf("%s: %w", spec.Name, err)
+			// delete the spec from the lookup map
+			// so any spec left-over may cause a Required
+			// error.
+			delete(lm, name)
 		}
-
-		// delete the spec from the lookup map
-		// so any spec left-over may cause a Required
-		// error.
-		delete(lm, name)
 	}
 
 	// check if any option that is required is
@@ -148,7 +163,7 @@ func ValidateOption(values []string, spec OptionSpec) error {
 		}
 
 		// ensure the value matches the types expecations.
-		if err := checkValue(v, spec.Type); err != nil {
+		if err := ValidateValue(v, spec.Type); err != nil {
 			return err
 		}
 	}
@@ -156,7 +171,8 @@ func ValidateOption(values []string, spec OptionSpec) error {
 	return nil
 }
 
-func checkValue(val string, optType OptionType) error {
+// ValidateValue ensures that val is a valid value for optType.
+func ValidateValue(val string, optType OptionType) error {
 	switch optType {
 	case BoolType:
 		if _, err := ConvertBool(val); err != nil {

@@ -162,6 +162,10 @@ func encodeSection(val reflect.Value, name string, result *File, opts *Options) 
 
 func encodeBasic(val reflect.Value, name string, result *Options, includeZeroValues bool) error {
 	// skip encoding if we have the zero value
+	if !val.IsValid() {
+		return nil
+	}
+
 	if !includeZeroValues {
 		if val.IsZero() {
 			return nil

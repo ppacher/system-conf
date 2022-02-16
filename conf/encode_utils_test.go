@@ -16,12 +16,17 @@ func TestEncodeOptions(t *testing.T) {
 		"bool":             true,
 		"interface slice":  []interface{}{"foo", 10},
 		"interface slice2": []interface{}{(interface{})("test")},
+		"nil":              nil,
+		"nil slice":        []interface{}{nil},
+		"nil slice 2":      []interface{}{"foo", nil, "bar"},
 	}
 
 	for key, val := range opts {
 		res, err := conf.EncodeToOptions(key, val)
 		assert.NoError(t, err, "key %q", key)
-		assert.NotNil(t, res, "key %q", key)
+		if key != "nil slice" && key != "nil" {
+			assert.NotNil(t, res, "key %q", key)
+		}
 	}
 }
 

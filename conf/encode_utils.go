@@ -179,7 +179,7 @@ func encodeBasic(val reflect.Value, name string, result *Options, includeZeroVal
 	switch kind {
 	case reflect.Slice:
 		for i := 0; i < val.Len(); i++ {
-			elem := val.Index(i)
+			elem := reflect.ValueOf(val.Index(i).Interface())
 			if err := encodeBasic(elem, name, result, true); err != nil {
 				return fmt.Errorf("failed to encode slice: %w", err)
 			}

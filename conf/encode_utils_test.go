@@ -7,6 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestEncodeOptions(t *testing.T) {
+	var opts = map[string]interface{}{
+		"string":           "string",
+		"string slice":     []string{"1", "2"},
+		"int":              1,
+		"int8 slice":       []int8{1, 2},
+		"bool":             true,
+		"interface slice":  []interface{}{"foo", 10},
+		"interface slice2": []interface{}{(interface{})("test")},
+	}
+
+	for key, val := range opts {
+		res, err := conf.EncodeToOptions(key, val)
+		assert.NoError(t, err, "key %q", key)
+		assert.NotNil(t, res, "key %q", key)
+	}
+}
+
 func TestEncodeSections(t *testing.T) {
 	type Sec1 struct {
 		Bool   bool

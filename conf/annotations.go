@@ -11,7 +11,7 @@ type (
 
 // With adds one or more annotation key-value pairs.
 func (an *Annotation) With(kvs ...KeyValue) Annotation {
-	if an == nil {
+	if *an == nil {
 		*an = Annotation{}
 	}
 	for _, kv := range kvs {

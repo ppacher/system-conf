@@ -13,7 +13,9 @@ func ParseFromEnv(prefix string, env []string, reg SectionRegistry) (*File, erro
 
 	sections := make(map[string][]*Section)
 
-	for varName, varValue := range toMap(env) {
+	order, lm := toMap(env)
+	for _, varName := range order {
+		varValue := lm[varName]
 		parts := strings.Split(varName, "_")
 		if !strings.EqualFold(parts[0], prefix) {
 			continue
@@ -93,11 +95,13 @@ func ParseFromEnv(prefix string, env []string, reg SectionRegistry) (*File, erro
 	return envFile, nil
 }
 
-func toMap(env []string) map[string]string {
+func toMap(env []string) ([]string, map[string]string) {
 	r := map[string]string{}
+	order := []string{}
 	for _, e := range env {
 		p := strings.SplitN(e, "=", 2)
+		order = append(order, p[0])
 		r[p[0]] = p[1]
 	}
-	return r
+	return order, r
 }

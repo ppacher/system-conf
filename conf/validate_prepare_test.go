@@ -40,7 +40,7 @@ func TestCheckValue(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		err := checkValue(c.V, c.T)
+		err := ValidateValue(c.V, c.T)
 
 		if !errors.Is(err, c.E) {
 			t.Errorf("case #%d (input=%v) expected error to be %s but got %s", idx, c.V, c.E, err)

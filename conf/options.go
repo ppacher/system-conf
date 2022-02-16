@@ -54,8 +54,14 @@ func (opts Options) GetString(name string) (string, error) {
 }
 
 // GetAs returns the value of name interpreted as specType.
+// If no options with name exist nil is returned. GetAs panics
+// if multiple options exist but specType is not a slice type.
 func (opts Options) GetAs(name string, specType OptionType) interface{} {
 	values := opts.GetStringSlice(name)
+
+	if len(values) == 0 {
+		return nil
+	}
 
 	var x interface{}
 	if err := DecodeValues(values, specType, &x); err != nil {

@@ -25,7 +25,11 @@ func (dec *SectionDecoder) AsMap(sec Section) map[string]interface{} {
 	res := make(map[string]interface{})
 
 	for _, opt := range dec.specs {
-		res[opt.Name] = sec.GetAs(opt.Name, opt.Type)
+		val := sec.GetAs(opt.Name, opt.Type)
+		if val == nil {
+			continue
+		}
+		res[opt.Name] = val
 	}
 
 	return res

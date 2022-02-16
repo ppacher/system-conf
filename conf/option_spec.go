@@ -43,7 +43,7 @@ type OptionSpec struct {
 	// be later used in help or documentation generators.
 	// Note that it is recommended to ensure annotation values
 	// are JSON or Gob serializable.
-	Annotations map[string]interface{}
+	Annotations Annotation `json:"annotation,omitempty"`
 }
 
 // HasAnnotation returns true if spec has an annotation with the

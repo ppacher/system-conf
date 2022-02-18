@@ -241,7 +241,7 @@ func decode(data []string, specType OptionType, outVal reflect.Value) error {
 		return decodeBool(data[0], specType, outVal)
 	case reflect.Int:
 		return decodeInt(data[0], specType, outVal)
-	case reflect.Float32:
+	case reflect.Float32, reflect.Float64:
 		return decodeFloat(data[0], specType, outVal)
 	case reflect.String:
 		return decodeString(data[0], specType, outVal)
@@ -441,8 +441,6 @@ func getKind(val reflect.Value) reflect.Kind {
 		return reflect.Int
 	case kind >= reflect.Uint && kind <= reflect.Uint64:
 		return reflect.Uint
-	case kind >= reflect.Float32 && kind <= reflect.Float64:
-		return reflect.Float32
 	default:
 		return kind
 	}

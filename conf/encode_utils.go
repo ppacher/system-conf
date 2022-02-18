@@ -195,7 +195,9 @@ func encodeBasic(val reflect.Value, name string, result *Options, includeZeroVal
 	case reflect.Int, reflect.Uint:
 		value = fmt.Sprintf("%d", x)
 	case reflect.Float32:
-		value = strings.TrimRight(fmt.Sprintf("%f", x), "0")
+		value = strconv.FormatFloat((float64)(x.(float32)), 'f', -1, 32)
+	case reflect.Float64:
+		value = strconv.FormatFloat(x.(float64), 'f', -1, 64)
 	case reflect.String:
 		value = x.(string)
 	case reflect.Struct: // TODO(ppacher): we should only allow anonymous fields here
